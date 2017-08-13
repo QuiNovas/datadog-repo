@@ -1,0 +1,25 @@
+version: 0.1
+
+phases:
+  install:
+    commands:
+      - yum install -y rpm-build python epel-release.noarch
+      - yum install -y python-pip
+      - pip install awscli
+  pre_build:
+    commands:
+      - |-
+        mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+        mv *.spec ~/rpmbuild/SPECS/
+        for i in `ls -I buildspec.yml`; do
+        mv $i ~/rpmbuild/SOURCES/;
+        done
+  build:
+    commands:
+      - |-
+        cd ~/rpmbuild/SPECS/
+        rpmbuild -bb *.spec
+  post_build:
+    commands:
+      - aws s3 cp ~/rpmbuild/RPMS/ s3://${REPO_BUCKET}/${REPO_PREFIX}/ --recursive
+
